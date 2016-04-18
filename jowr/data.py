@@ -6,6 +6,7 @@ ESC_CODE = 27 # Key code for Esc
 
 
 class VideoReader(object):
+    """Some documentation"""
 
     def __init__(self, filename):
         """Open a video file."""

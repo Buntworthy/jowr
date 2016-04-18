@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
-import jowr.jcv as jcv
+import jowr
 
 # Shared stuff
 filename = "C:\\Data\\prototype demo LQ.mp4"
 start_frame = 100
-end_frame = 200
+end_frame = 150
 
 # OpenCV
 vid = cv2.VideoCapture(filename)
@@ -24,6 +24,6 @@ cv2.destroyAllWindows()
 
 
 # jowr
-vid = jcv.VideoReader(filename)
+vid = jowr.VideoReader(filename)
 for frame in vid.frames(start_frame,end_frame):
     frame.show(wait_time=30, auto_close=False)
