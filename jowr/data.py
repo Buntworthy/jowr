@@ -2,11 +2,19 @@ import cv2
 
 # Constants
 DEFAULT_WINDOW_NAME = "default"
-ESC_CODE = 27 # Key code for Esc
+ESC_CODE = 27
+"""Key code for Esc """
 
 
 class VideoReader(object):
-    """Some documentation"""
+    """Class to read video files.
+
+    Wraps the existing VideoCapture class of OpenCV.
+
+    Attributes:
+        cap: OpenCV VideoCapture object.
+
+    """
 
     def __init__(self, filename):
         """Open a video file."""
@@ -16,9 +24,10 @@ class VideoReader(object):
     def frames(self, start=0, end=-1):
         """Generator to return frames from the video.
 
-        Keyword arguments:
-        start -- 0-index start frame (default 0)
-        end -- 0-index end frame, -1 for end of video (default -1)
+        Args
+            start: 0-index start frame (default 0).
+            end: 0-index end frame, -1 for end of video (default -1).
+
         """
 
         # Set the starting frame
@@ -42,6 +51,11 @@ class VideoReader(object):
 
 
 class Image(object):
+    """Represents image data.
+
+    Image data is stored as a Numpy array in the field image_data.
+
+    """
 
     def __init__(self, image_data):
         """Initialise Image object, store data, and extract properties"""
@@ -56,7 +70,7 @@ class Image(object):
             self.channels = 1
 
     def show(self, window_name=DEFAULT_WINDOW_NAME, wait_time=0, callbacks=None, esc_close=True, auto_close=True):
-        """Show the image. Return False if quit key pressed"""
+        """Show the image. Return False if quit key pressed."""
         # Could have another method e.g. show and close, or flash?
         cv2.imshow(window_name, self.image_data)
         key_code = cv2.waitKey(wait_time)

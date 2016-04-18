@@ -24,6 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="jowr 0.0 documentation" href="#" />
+    <link rel="next" title="Hello!" href="intro.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -40,13 +41,67 @@
 <h1>Welcome to jowr&#8217;s documentation!<a class="headerlink" href="#welcome-to-jowr-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
-<ul class="simple">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Hello!</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#a-code-example">A code example</a></li>
+</ul>
+</li>
 </ul>
 </div>
+<span class="target" id="module-jowr.data"></span><dl class="data">
+<dt id="jowr.data.ESC_CODE">
+<code class="descclassname">jowr.data.</code><code class="descname">ESC_CODE</code><em class="property"> = 27</em><a class="headerlink" href="#jowr.data.ESC_CODE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Key code for Esc</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jowr.data.Image">
+<em class="property">class </em><code class="descclassname">jowr.data.</code><code class="descname">Image</code><span class="sig-paren">(</span><em>image_data</em><span class="sig-paren">)</span><a class="headerlink" href="#jowr.data.Image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents image data.</p>
+<p>Image data is stored as a Numpy array in the field image_data.</p>
+<dl class="method">
+<dt id="jowr.data.Image.show">
+<code class="descname">show</code><span class="sig-paren">(</span><em>window_name='default'</em>, <em>wait_time=0</em>, <em>callbacks=None</em>, <em>esc_close=True</em>, <em>auto_close=True</em><span class="sig-paren">)</span><a class="headerlink" href="#jowr.data.Image.show" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show the image. Return False if quit key pressed.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="class">
 <dt id="jowr.data.VideoReader">
 <em class="property">class </em><code class="descclassname">jowr.data.</code><code class="descname">VideoReader</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#jowr.data.VideoReader" title="Permalink to this definition">¶</a></dt>
-<dd><p>Some documentation</p>
+<dd><p>Class to read video files.</p>
+<p>Wraps the existing VideoCapture class of OpenCV.</p>
+<dl class="attribute">
+<dt id="jowr.data.VideoReader.cap">
+<code class="descname">cap</code><a class="headerlink" href="#jowr.data.VideoReader.cap" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpenCV VideoCapture object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jowr.data.VideoReader.__del__">
+<code class="descname">__del__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jowr.data.VideoReader.__del__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release the video file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jowr.data.VideoReader.frames">
+<code class="descname">frames</code><span class="sig-paren">(</span><em>start=0</em>, <em>end=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#jowr.data.VideoReader.frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator to return frames from the video.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>start</strong> &#8211; 0-index start frame (default 0).</li>
+<li><strong>end</strong> &#8211; 0-index end frame, -1 for end of video (default -1).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -74,6 +129,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="intro.html" title="next chapter">Hello!</a></li>
   </ul></li>
 </ul>
 </div>

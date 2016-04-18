@@ -11,7 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-.. autoclass:: jowr.data.VideoReader
+   intro
+
+.. automodule:: jowr.data
+   :members:
 
 Indices and tables
 ==================
