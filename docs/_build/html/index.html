@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="jowr 0.0 documentation" href="#" />
-    <link rel="next" title="Hello!" href="intro.html" />
+    <link rel="next" title="Introduction" href="intro.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -39,11 +39,47 @@
             
   <div class="section" id="welcome-to-jowr-s-documentation">
 <h1>Welcome to jowr&#8217;s documentation!<a class="headerlink" href="#welcome-to-jowr-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p><em>jowr = Justin&#8217;s OpenCV Wrapper</em></p>
+<p>jowr is a bunch of helper functions which make using OpenCV python interface a bit friendlier.</p>
+<div class="section" id="an-example">
+<h2>An example<a class="headerlink" href="#an-example" title="Permalink to this headline">¶</a></h2>
+<p>Set up some variables:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;some_video.mp4&quot;</span>
+<span class="n">start_frame</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">end_frame</span> <span class="o">=</span> <span class="mi">150</span>
+<span class="n">frame_time</span> <span class="o">=</span> <span class="mi">30</span>
+</pre></div>
+</div>
+<p>Sequentially display some frames from the video with OpenCV&#8217;s native Python bindings:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># OpenCV only</span>
+<span class="n">vid</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">VideoCapture</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="n">vid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_POS_FRAMES</span><span class="p">,</span> <span class="n">start_frame</span><span class="p">)</span>
+<span class="n">ret</span><span class="p">,</span> <span class="n">frame</span> <span class="o">=</span> <span class="n">vid</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="k">while</span> <span class="n">ret</span><span class="p">:</span>
+    <span class="n">ret</span><span class="p">,</span> <span class="n">frame</span> <span class="o">=</span> <span class="n">vid</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s2">&quot;Frame&quot;</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="n">frame_time</span><span class="p">)</span>
+    <span class="n">frame_number</span> <span class="o">=</span> <span class="n">vid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_POS_FRAMES</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">frame_number</span> <span class="o">&gt;</span> <span class="n">end_frame</span> <span class="ow">or</span> <span class="n">key</span> <span class="ow">is</span> <span class="mi">27</span><span class="p">:</span>
+        <span class="k">break</span>
+
+<span class="n">cv2</span><span class="o">.</span><span class="n">destroyAllWindows</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Do the same with jowr&#8217;s help:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># jowr</span>
+<span class="n">vid</span> <span class="o">=</span> <span class="n">jowr</span><span class="o">.</span><span class="n">VideoReader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">vid</span><span class="p">(</span><span class="n">start_frame</span><span class="p">,</span><span class="n">end_frame</span><span class="p">):</span>
+   <span class="n">frame</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">wait_time</span><span class="o">=</span><span class="n">frame_time</span><span class="p">,</span> <span class="n">auto_close</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Hello!</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#a-code-example">A code example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics.html">Basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#loading-images">Loading images</a></li>
 </ul>
 </li>
 </ul>
@@ -105,6 +141,7 @@
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
@@ -122,14 +159,17 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to jowr&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#">Welcome to jowr&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#an-example">An example</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="intro.html" title="next chapter">Hello!</a></li>
+      <li>Next: <a href="intro.html" title="next chapter">Introduction</a></li>
   </ul></li>
 </ul>
 </div>
