@@ -1,7 +1,28 @@
 import cv2
 import os
 
-class VideoReader(object):
+import time
+
+
+class BaseReader(object):
+    """Base class for reading from video sources."""
+
+    def __init__(self, source):
+        self.cap = cv2.VideoCapture(source)
+        self.source = source
+
+        if not self.cap.isOpened():
+            del self
+            raise IOError('Could not open specified source')
+
+    def __del__(self):
+        """Release the video file."""
+        if self.cap:
+            self.cap.release()
+
+
+
+class VideoReader(BaseReader):
     """Class to read video files.
 
     Wraps the existing VideoCapture class of OpenCV.
@@ -15,25 +36,21 @@ class VideoReader(object):
 
     # TODO make superclass for both camera and video sources
 
-    def __init__(self, filename):
+    def __init__(self, source):
         """Open a video file."""
-        self.cap = None
-        self.filename = ''
-
-        if os.path.isfile(filename):
-            self.cap = cv2.VideoCapture(filename)
-            self.filename = filename
-        else:
+        super(VideoReader, self).__init__(source)
+        # Check the file exists
+        if not os.path.isfile(source):
             del self
             raise IOError('File not found')
 
     def __repr__(self):
-        return ("VideoReader(%s)", self.filename)
+        return "VideoReader(%s)" % self.source
 
     def frames(self, start=0, end=-1):
         """Generator to return frames from the video.
 
-        Args
+        Args:
             start: 0-index start frame (default 0).
             end: 0-index end frame, -1 for end of video (default -1).
 
@@ -41,7 +58,6 @@ class VideoReader(object):
 
         # Set the starting frame
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-
         # Read the first frame
         ret, frame = self.cap.read()
         while ret:
@@ -53,7 +69,34 @@ class VideoReader(object):
                     break
             ret, frame = self.cap.read()
 
-    def __del__(self):
-        """Release the video file."""
-        if self.cap:
-            self.cap.release()
+
+class CameraReader(BaseReader):
+    """Class to read from an attached Camera.
+
+    Wraps the existing VideoCapture class of OpenCV.
+
+    Attributes:
+        cap: OpenCV VideoCapture object.
+
+    """
+
+    def __repr__(self):
+        return "CameraReader(%s)" % self.source
+
+    def frames(self, duration=-1):
+        """Generator to return frames from the video.
+
+        Args:
+            duration: length of video in seconds to capture (default -1).
+
+        """
+
+        start_time = time.time()
+        # Read the first frame
+        ret, frame = self.cap.read()
+        while ret:
+            yield frame
+            # Check if we have reached the last frame
+            if 0 < duration < (time.time() - start_time):
+                    break
+            ret, frame = self.cap.read()
