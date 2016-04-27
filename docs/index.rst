@@ -49,6 +49,7 @@ Contents:
 
    intro
    basics
+   processing
 
 .. automodule:: jowr.data
    :members:

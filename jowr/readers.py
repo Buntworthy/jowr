@@ -21,7 +21,6 @@ class BaseReader(object):
             self.cap.release()
 
 
-
 class VideoReader(BaseReader):
     """Class to read video files.
 

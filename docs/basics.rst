@@ -4,9 +4,9 @@ Basics
 Working with images
 -------------------
 
-To display an image using OpenCV's imshow method, use :py:method:`~jowr.core.show`. By default this will display
+To display an image using OpenCV's imshow method, use :py:meth:`~jowr.show`. By default this will display
 the image in a window with a default name and then close the window when a key is pressed. By passing in optional
-parameters to :py:method:`~jowr.core.show`::
+parameters to :py:meth:`~jowr.show`::
 
     jowr.show(frame,
                 window_name='result',                       # Display in window named 'result'
@@ -20,8 +20,8 @@ Although this method provides a convenient way to show images, for more complex 
 Reading video
 -------------
 
-The :py:class:`~jowr.readers.VideoReader` provides a wrapper around OpenCV's VideoCapture object for reading from
-video files. :py:class:`~jowr.readers.VideoReader` implements some convenience methods to make the interaction
+The :py:class:`~jowr.VideoReader` provides a wrapper around OpenCV's VideoCapture object for reading from
+video files. :py:class:`~jowr.VideoReader` implements some convenience methods to make the interaction
 with frames from a video file a little simpler. For example providing generator access to frames::
 
     eaten_bananas = 0
@@ -41,3 +41,4 @@ jowr also provides a convenience method for playing all the frames produced by a
 
     vid = jowr.VideoReader('some_video.mp4')
     jowr.play([some_processing(frame) for frame in vid.frames()])
+

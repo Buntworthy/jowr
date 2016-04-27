@@ -6,8 +6,6 @@
 Welcome to jowr's documentation!
 ================================
 
-*jowr = Justin's OpenCV Wrapper*
-
 jowr is a bunch of helper functions which make using OpenCV python interface a bit friendlier.
 
 An example
@@ -42,7 +40,7 @@ Do the same with jowr's help::
    # jowr
    vid = jowr.VideoReader(filename)
    for frame in vid(start_frame,end_frame):
-      frame.show(wait_time=frame_time, auto_close=False)
+      jowr.show(frame, wait_time=frame_time, auto_close=False)
 
 Contents:
 
@@ -51,6 +49,7 @@ Contents:
 
    intro
    basics
+   processing
 
 .. automodule:: jowr.data
    :members:
