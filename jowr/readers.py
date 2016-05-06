@@ -3,6 +3,9 @@ import os
 
 import time
 
+# TODO make boolean return false if camera not open
+# TODO give the source a name
+# TODO resolution field
 
 class BaseReader(object):
     """Base class for reading from video sources."""
@@ -33,11 +36,10 @@ class VideoReader(BaseReader):
         IOError: Specified video file was not found.
     """
 
-    # TODO make superclass for both camera and video sources
-
     def __init__(self, source):
         """Open a video file."""
         super(VideoReader, self).__init__(source)
+
         # Check the file exists
         if not os.path.isfile(source):
             del self
@@ -78,6 +80,12 @@ class CameraReader(BaseReader):
         cap: OpenCV VideoCapture object.
 
     """
+    def __init__(self, source):
+        super(CameraReader, self).__init__(source)
+        ## temp
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.resolution = (1920, 1080)
 
     def __repr__(self):
         return "CameraReader(%s)" % self.source

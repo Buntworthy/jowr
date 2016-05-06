@@ -14,12 +14,13 @@ def show(frame, window_name=DEFAULT_WINDOW_NAME, wait_time=0, callbacks=None,
     # TODO deal with different data types
     cv2.imshow(window_name, frame)
     key_code = cv2.waitKey(wait_time)
-    if callbacks and (key_code in callbacks):
-        callbacks[key_code]()
+    if callbacks and key_code>0 and (chr(key_code) in callbacks):
+        callbacks[chr(key_code)]()
 
     # Close the window on Esc
     if esc_close and (key_code is ESC_CODE):
         cv2.destroyWindow(window_name)
+        return True
 
     # Close the window on timeout
     if auto_close and (key_code is -1):
