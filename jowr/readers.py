@@ -6,6 +6,8 @@ import time
 # TODO make boolean return false if camera not open
 # TODO give the source a name
 # TODO resolution field
+# TODO file sequence reader?
+
 
 class BaseReader(object):
     """Base class for reading from video sources."""

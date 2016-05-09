@@ -1,5 +1,7 @@
 import cv2
 import os
+import zipfile
+import datetime
 
 # Constants
 DEFAULT_WINDOW_NAME = "default"
@@ -41,6 +43,19 @@ def close(window_name=DEFAULT_WINDOW_NAME):
 def im_read_resize(filename, new_width=0, new_height=0):
     return cv2.resize(cv2.imread(filename), None, fx=new_width, fy=new_height)
 
+
+def add_to_zip(image, filename):
+    """ Add an image to zip file with datestamp."""
+    with zipfile.ZipFile(filename, 'a') as zip_file:
+        # Make the filename
+        temp_filename = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')\
+                        + ".png"
+        # Write image
+        cv2.imwrite(temp_filename, image)
+        # Add to zip
+        zip_file.write(temp_filename)
+        # Delete the temporary file
+        os.remove(temp_filename)
 
 def rgb2gray(input_image):
     pass

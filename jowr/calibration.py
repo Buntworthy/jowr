@@ -1,5 +1,7 @@
 import os
 
+import time
+
 import jowr
 import cv2
 import numpy as np
@@ -39,6 +41,17 @@ class Calibrator(object):
     def __init__(self,
                  chequer_size=(9, 6),
                  chequer_scale=25):
+        """ Create the Calibrator object.
+
+        Optionally specify the chequerboard size to be used. Download one here:
+        http://docs.opencv.org/2.4/_downloads/pattern.png
+
+        Args:
+            chequer_size (Tuple[int]): The (columns, rows) of the chequerboard
+            chequer_scale (int): The size of a square in mm
+        """
+
+        # TODO show result option
 
         self.calibration = {}
         self.object_points = []  # 3d point in real world space
@@ -51,28 +64,75 @@ class Calibrator(object):
                                                            self.chequer_scale)
 
     def calibrate(self, cam, save_name=''):
-        # Arrays to store object points and image points from all the images.
-        # TODO check if this is a reader, or a zip file
-        if cam:
-            # Take some images with the camera
-            for frame in cam.frames():
-                # Detect corners for each image during acquisition
-                stop = jowr.show(frame, 'Camera',
-                                 wait_time=1,
-                                 callbacks={
-                                     # Process a frame on s key pressed
-                                     's': lambda: self.process(frame,
-                                                               save_name)
-                                 },
-                                 auto_close=False)
-                if stop:
-                    break
-            #TODO check we have some points
-            self.calculate_calibration(cam.resolution)
-            print('Camera matrix:')
-            print(self.calibration['A'])
-            print('Distortion coefficients')
-            print(self.calibration['dist'])
+        # A camera/video
+        if isinstance(cam, jowr.BaseReader):
+            self.calibrate_reader(cam, save_name)
+
+        # An existing zip file of images
+        elif zipfile.is_zipfile(cam):
+            self.calibrate_zip(cam)
+
+        # An existing folder of images
+        elif os.path.isdir(cam):
+            # TODO read from image file
+            # Loop over files in folder
+            pass
+        # I don't know what this is
+        else:
+            raise TypeError("Unknown input type, "
+                            "not a camera, video, or images.")
+
+        #TODO check we have some points
+
+        print('Camera matrix:')
+        print(self.calibration['A'])
+        print('Distortion coefficients')
+        print(self.calibration['dist'])
+
+    def calibrate_zip(self, cam):
+        with zipfile.ZipFile(cam, 'r') as zip_file:
+            zip_members = [f.filename for f in zip_file.filelist]
+            # TODO add other extension
+            is_png = [this_file.endswith('.png')
+                      for this_file in zip_members]
+
+            # Check there are some png files
+            if not any(is_png):
+                raise TypeError("No png files found in zip")
+
+            # Loop over files in zip file
+            for zipinfo, filename, png in \
+                    zip(zip_file.filelist, zip_members, is_png):
+                if png:
+                    # cv2's imread expect a file, so we extract
+                    zip_file.extract(zipinfo)
+                    image = cv2.imread(filename)
+                    # TODO be careful here!
+                    os.remove(filename)
+                    # Check the resolution
+                    rows = np.size(image, 0)
+                    cols = np.size(image, 1)
+                    resolution = (rows, cols)
+                    # TODO Make sure resolution is always the same
+                    self.process(image, '')
+
+            self.calculate_calibration(resolution)
+
+    def calibrate_reader(self, cam, save_name):
+        # Take some images with the camera
+        for frame in cam.frames():
+            # Detect corners for each image during acquisition
+            stop = jowr.show(frame, 'Camera',
+                             wait_time=1,
+                             callbacks={
+                                 # Process a frame on s key pressed
+                                 's': lambda: self.process(frame,
+                                                           save_name)
+                             },
+                             auto_close=False)
+            if stop:
+                break
+        self.calculate_calibration(cam.resolution)
 
     def save(self, filename):
         with open(filename, 'wb') as cal_file:
@@ -84,6 +144,13 @@ class Calibrator(object):
             self.calibration = pickle.load(cal_file)
 
     def process(self, frame, save_name):
+        """ Find the chessboard corners in a single image.
+
+        Args:
+            frame Colour image with channel ordering BGR
+             save_name Name of zip file to save image to
+        """
+        # TODO accept gray scale frame
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners
@@ -101,7 +168,8 @@ class Calibrator(object):
             self.img_points.append(corners)
 
             # Draw and display the corners
-            modified_frame = cv2.drawChessboardCorners(frame,
+            modified_frame = frame.copy()
+            modified_frame = cv2.drawChessboardCorners(modified_frame,
                                                        (self.chequer_size[0],
                                                         self.chequer_size[1]),
                                                        corners, ret)
@@ -110,16 +178,8 @@ class Calibrator(object):
                       wait_time=500)
 
             if save_name:
-                with zipfile.ZipFile(save_name, 'a') as cal_file:
-                    # Make the filename
-                    datestr = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-                    temp_filename = datestr + '_calibration.png'
-                    # Write image
-                    cv2.imwrite(temp_filename, frame)
-                    # Add to zip
-                    cal_file.write(temp_filename)
-                    # Delete the temporary file
-                    os.remove(temp_filename)
+                # Add to the zip file
+                jowr.add_to_zip(frame, save_name)
 
     def calculate_calibration(self, resolution):
 
@@ -134,7 +194,7 @@ class Calibrator(object):
 
     @staticmethod
     def generate_chequer_points(chequer_size, chequer_scale):
-        # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+        """Generate an array of corner point positions."""
         chequer_points = np.zeros((chequer_size[0] * chequer_size[1], 3),
                                   np.float32)
         chequer_points[:, :2] = np.mgrid[0:chequer_size[0],
@@ -146,5 +206,6 @@ class Calibrator(object):
 
 if __name__ == '__main__':
     c = Calibrator()
-    c.calibrate(jowr.CameraReader(0), 'test.zip')
-    c.save('test_cal.p')
+    # c.calibrate(jowr.CameraReader(0), 'test.zip')
+    # c.save('test_cal.p')
+    c.calibrate('test.zip')
