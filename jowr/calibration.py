@@ -120,6 +120,7 @@ class Calibrator(object):
 
     def calibrate_reader(self, cam, save_name):
         # Take some images with the camera
+        # TODO print some instructions
         for frame in cam.frames():
             # Detect corners for each image during acquisition
             stop = jowr.show(frame, 'Camera',
@@ -206,6 +207,6 @@ class Calibrator(object):
 
 if __name__ == '__main__':
     c = Calibrator()
-    # c.calibrate(jowr.CameraReader(0), 'test.zip')
+    c.calibrate(jowr.CameraReader(1), 'test.zip')
     # c.save('test_cal.p')
-    c.calibrate('test.zip')
+    # c.calibrate('test.zip')

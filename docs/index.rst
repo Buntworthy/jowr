@@ -50,6 +50,7 @@ Contents:
    intro
    basics
    processing
+   calibration
 
 .. automodule:: jowr.data
    :members:
