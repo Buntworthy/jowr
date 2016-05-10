@@ -56,6 +56,7 @@ class Calibrator(object):
         self.calibration = {}
         self.object_points = []  # 3d point in real world space
         self.img_points = []  # 2d points in image plane.
+        self.resolution = None  # resolution of the images used for calibration
 
         self.chequer_size = chequer_size
         self.chequer_scale = chequer_scale
@@ -81,8 +82,6 @@ class Calibrator(object):
         else:
             raise TypeError("Unknown input type, "
                             "not a camera, video, or images.")
-
-        #TODO check we have some points
 
         print('Camera matrix:')
         print(self.calibration['A'])
@@ -110,17 +109,18 @@ class Calibrator(object):
                     # TODO be careful here!
                     os.remove(filename)
                     # Check the resolution
-                    rows = np.size(image, 0)
-                    cols = np.size(image, 1)
-                    resolution = (rows, cols)
-                    # TODO Make sure resolution is always the same
+                    resolution = jowr.resolution(image)
+                    if self.resolution and self.resolution != resolution:
+                            raise IOError(
+                                "Calibration images are different resolutions.")
                     self.process(image, '')
 
-            self.calculate_calibration(resolution)
+            self.calculate_calibration()
 
     def calibrate_reader(self, cam, save_name):
         # Take some images with the camera
-        # TODO print some instructions
+        print("Press s key to capture an image. Press Esc to finish.")
+        self.resolution = cam.resolution
         for frame in cam.frames():
             # Detect corners for each image during acquisition
             stop = jowr.show(frame, 'Camera',
@@ -133,7 +133,7 @@ class Calibrator(object):
                              auto_close=False)
             if stop:
                 break
-        self.calculate_calibration(cam.resolution)
+        self.calculate_calibration()
 
     def save(self, filename):
         with open(filename, 'wb') as cal_file:
@@ -151,8 +151,10 @@ class Calibrator(object):
             frame Colour image with channel ordering BGR
              save_name Name of zip file to save image to
         """
-        # TODO accept gray scale frame
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if jowr.channels(frame) is 3:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = frame.copy()
 
         # Find the chess board corners
         ret, corners = \
@@ -182,7 +184,15 @@ class Calibrator(object):
                 # Add to the zip file
                 jowr.add_to_zip(frame, save_name)
 
-    def calculate_calibration(self, resolution):
+    def calculate_calibration(self):
+
+        # Check we have everything we need
+        if not self.object_points:
+            raise ValueError("No chessboard points to work with.")
+        if not self.img_points:
+            raise ValueError("No image points to work with.")
+        if not self.resolution:
+            raise ValueError("Image resolution not detected")
 
         (self.calibration['error'],
          self.calibration['A'],
@@ -190,7 +200,7 @@ class Calibrator(object):
          self.calibration['rvecs'],
          self.calibration['tvecs']) = cv2.calibrateCamera(self.object_points,
                                                           self.img_points,
-                                                          resolution,
+                                                          self.resolution,
                                                           None, None)
 
     @staticmethod
@@ -199,7 +209,7 @@ class Calibrator(object):
         chequer_points = np.zeros((chequer_size[0] * chequer_size[1], 3),
                                   np.float32)
         chequer_points[:, :2] = np.mgrid[0:chequer_size[0],
-                                     0:chequer_size[1]].T.reshape(-1, 2)
+                                0:chequer_size[1]].T.reshape(-1, 2)
         # adjust scale
         chequer_points *= chequer_scale
         return chequer_points
@@ -207,6 +217,6 @@ class Calibrator(object):
 
 if __name__ == '__main__':
     c = Calibrator()
-    c.calibrate(jowr.CameraReader(1), 'test.zip')
+    c.calibrate(jowr.CameraReader(0), 'test.zip')
     # c.save('test_cal.p')
     # c.calibrate('test.zip')

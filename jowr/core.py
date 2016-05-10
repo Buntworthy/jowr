@@ -2,6 +2,7 @@ import cv2
 import os
 import zipfile
 import datetime
+import numpy as np
 
 # Constants
 DEFAULT_WINDOW_NAME = "default"
@@ -57,21 +58,25 @@ def add_to_zip(image, filename):
         # Delete the temporary file
         os.remove(temp_filename)
 
-def rgb2gray(input_image):
-    pass
+
+def resolution(image):
+    """Return the image resolution as a tuple (width, height)"""
+    if not isinstance(image, np.ndarray):
+        raise TypeError("Image is not a Numpy array.")
+    im_shape = image.shape
+    width = im_shape[1]
+    height = im_shape[0]
+    return width, height
 
 
-def rgb2hsv(input_image):
-    pass
-
-
-def hsv2rgb(input_image):
-    pass
-
-
-def rgb2lab(input_image):
-    pass
-
-
-def lab2rgb(input_image):
-    pass
+def channels(image):
+    """Return the number of channels in an image"""
+    if not isinstance(image, np.ndarray):
+        raise TypeError("Image is not a Numpy array.")
+    im_shape = image.shape
+    if len(im_shape) is 2:
+        return 1
+    elif len(im_shape) is 3:
+        return im_shape[2]
+    else:
+        raise ValueError("Array rank is not 2 or 3.")
