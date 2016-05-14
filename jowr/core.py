@@ -32,9 +32,10 @@ def show(frame, window_name=DEFAULT_WINDOW_NAME, wait_time=0, callbacks=None,
 
 def play(frame_generator):
     """Convenience method to play all the frames in a iterable."""
-    # TODO exit on Esc
     for frame in frame_generator:
-        show(frame, wait_time=30, auto_close=False)
+        stop = show(frame, wait_time=30, auto_close=False)
+        if stop:
+            break
     close()
 
 

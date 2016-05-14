@@ -3,14 +3,13 @@ import os
 import abc
 import time
 
+
 # TODO give the source a name
-# TODO resolution field
 # TODO file sequence reader?
 
 
-class BaseReader(metaclass = abc.ABCMeta):
+class BaseReader(metaclass=abc.ABCMeta):
     """Base class for reading from video sources."""
-
 
     def __init__(self, source):
         self.cap = cv2.VideoCapture(source)
@@ -57,7 +56,6 @@ class VideoReader(BaseReader):
         if not os.path.isfile(source):
             del self
             raise IOError('File not found')
-
 
         width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -112,6 +110,7 @@ class CameraReader(BaseReader):
         cap: OpenCV VideoCapture object.
 
     """
+
     def __init__(self, source):
         super(CameraReader, self).__init__(source)
 
@@ -134,11 +133,10 @@ class CameraReader(BaseReader):
 
         # Check the resolution
         if not (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) == width and
-                self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == height):
+                        self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == height):
             raise ValueError("Unsupported camera resolution")
         else:
             self.__resolution = (width, height)
-
 
     def frames(self, duration=-1):
         """Generator to return frames from the video.
@@ -155,11 +153,13 @@ class CameraReader(BaseReader):
             yield frame
             # Check if we have reached the last frame
             if 0 < duration < (time.time() - start_time):
-                    break
+                break
             ret, frame = self.cap.read()
+
 
 if __name__ == '__main__':
     import jowr
+
     c = VideoReader('..\\data\\sun.mp4')
     c.resolution = (100, 300)
-    jowr.play(c.frames(1, 100))
+    jowr.play(c.frames(1, 200))
