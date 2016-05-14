@@ -217,6 +217,6 @@ class Calibrator(object):
 
 if __name__ == '__main__':
     c = Calibrator()
-    c.calibrate(jowr.CameraReader(0), 'test.zip')
+    c.calibrate(jowr.CameraReader(1), 'test.zip')
     # c.save('test_cal.p')
     # c.calibrate('test.zip')

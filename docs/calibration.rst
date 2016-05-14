@@ -47,7 +47,7 @@ Saving data
 
 To save the calibration to file, simply call :py:meth:`~jowr.Calibrator.save` to
 pickle the calibration to a file, this can then later be loaded using the
-Calibrator. When calibration from Camera or Video image source, pass in the
+Calibrator. When calibrating from Camera or Video image source, pass in the
 optional argument `save_name` when calling `calibrate` to save all the images
 to a zip file `save_name.zip`::
 
@@ -60,3 +60,9 @@ to a zip file `save_name.zip`::
     #
     # Load the calibratione file again
     calibrator.load('calibration_file.p')
+
+TODO
+----
+
+* Calibration on a folder of images
+* Calibration and rectification of a stereo pair

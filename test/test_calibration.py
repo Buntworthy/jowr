@@ -5,6 +5,7 @@ sys.path.insert(0, myPath + '/../')
 import jowr
 import numpy as np
 
+
 def test_generate_chequer_points():
 
     chequer_size = (2,3)
