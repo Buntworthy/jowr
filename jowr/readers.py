@@ -161,5 +161,5 @@ if __name__ == '__main__':
     import jowr
 
     c = VideoReader('..\\data\\sun.mp4')
-    c.resolution = (100, 300)
+    c.resolution = (1000, 300)
     jowr.play(c.frames(1, 200))

@@ -1,13 +1,11 @@
 import os
-
-import time
+import zipfile
+import pickle
+import glob
 
 import jowr
 import cv2
 import numpy as np
-import zipfile
-import pickle
-import datetime
 
 
 class Calibrator(object):
@@ -75,18 +73,13 @@ class Calibrator(object):
 
         # An existing folder of images
         elif os.path.isdir(cam):
-            # TODO read from image file
-            # Loop over files in folder
-            pass
+            self.calibrate_folder(cam)
         # I don't know what this is
         else:
             raise TypeError("Unknown input type, "
                             "not a camera, video, or images.")
 
-        print('Camera matrix:')
-        print(self.calibration['A'])
-        print('Distortion coefficients')
-        print(self.calibration['dist'])
+        return self.calibration
 
     def calibrate_zip(self, cam):
         with zipfile.ZipFile(cam, 'r') as zip_file:
@@ -135,14 +128,29 @@ class Calibrator(object):
                 break
         self.calculate_calibration()
 
+    def calibrate_folder(self, folder):
+        # TODO other file formats
+        for filename in glob.glob('folder\\*.png'):
+            image = cv2.imread(filename)
+            # Check the resolution
+            resolution = jowr.resolution(image)
+            if self.resolution and self.resolution != resolution:
+                raise IOError(
+                    "Calibration images are different resolutions.")
+            self.process(image, '')
+        self.calculate_calibration()
+
     def save(self, filename):
         with open(filename, 'wb') as cal_file:
             pickle.dump(self.calibration, cal_file)
 
+
     # TODO some sort of validation
+
     def load(self, filename):
         with open(filename, 'rb') as cal_file:
             self.calibration = pickle.load(cal_file)
+            return self.calibration
 
     def process(self, frame, save_name):
         """ Find the chessboard corners in a single image.
