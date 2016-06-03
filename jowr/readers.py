@@ -63,7 +63,7 @@ class VideoReader(BaseReader):
         self.__resolution = self.__native_resolution
 
     def __repr__(self):
-        return "VideoReader(%s)" % self.source
+        return 'VideoReader({})'.format(self.source)
 
     @property
     def resolution(self):
@@ -119,7 +119,7 @@ class CameraReader(BaseReader):
         self.__resolution = (width, height)
 
     def __repr__(self):
-        return "CameraReader(%s)" % self.source
+        return 'CameraReader({})'.format(self.source)
 
     @property
     def resolution(self):

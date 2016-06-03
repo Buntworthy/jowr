@@ -62,6 +62,5 @@ def test_no_images():
     no_image_folder = 'test\\data\\empty'
 
     calibrator = jowr.Calibrator()
-    # TODO assert we get an error
     with pytest.raises(ValueError):
         calibrator.calibrate(no_image_folder)

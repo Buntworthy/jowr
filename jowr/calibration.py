@@ -38,7 +38,7 @@ class Calibrator(object):
 
     def __init__(self,
                  chequer_size=(9, 6),
-                 chequer_scale=25):
+                 chequer_scale=25.0):
         """ Create the Calibrator object.
 
         Optionally specify the chequerboard size to be used. Download one here:
@@ -104,8 +104,8 @@ class Calibrator(object):
                     # Check the resolution
                     resolution = jowr.resolution(image)
                     if self.resolution and self.resolution != resolution:
-                            raise IOError(
-                                "Calibration images are different resolutions.")
+                        raise IOError(
+                            "Calibration images are different resolutions.")
                     self.process(image, '')
 
             self.calculate_calibration()
@@ -143,7 +143,6 @@ class Calibrator(object):
     def save(self, filename):
         with open(filename, 'wb') as cal_file:
             pickle.dump(self.calibration, cal_file)
-
 
     # TODO some sort of validation
 
@@ -191,6 +190,7 @@ class Calibrator(object):
             if save_name:
                 # Add to the zip file
                 jowr.add_to_zip(frame, save_name)
+        return ret
 
     def calculate_calibration(self):
 
@@ -224,7 +224,10 @@ class Calibrator(object):
 
 
 if __name__ == '__main__':
-    c = Calibrator()
-    c.calibrate(jowr.CameraReader(1), 'test.zip')
-    # c.save('test_cal.p')
+    reader = jowr.CameraReader(2)
+    reader.resolution = (1920, 1080)
+
+    c = Calibrator(chequer_scale=2.5)
+    c.calibrate(reader, 'wide.zip')
+    c.save('wide_cal.p')
     # c.calibrate('test.zip')
