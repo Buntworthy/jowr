@@ -4,4 +4,4 @@ __version__ = '0.0'
 from jowr.core import *
 from jowr.pipeline import *
 from jowr.readers import *
-from jowr.calibration import Calibrator
+from jowr.calibration import *

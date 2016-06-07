@@ -1,15 +1,16 @@
 import sys, os
+
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
 
 import jowr
 import numpy as np
 import pytest
+import pickle
 
 
 def test_generate_chequer_points():
-
-    chequer_size = (2,3)
+    chequer_size = (2, 3)
     chequer_scale = 2
     generated_points = \
         jowr.Calibrator.generate_chequer_points(chequer_size, chequer_scale)
@@ -24,12 +25,15 @@ def test_generate_chequer_points():
 
 
 def test_cal_from_zip():
-    expected_cal = None
-    zip_filename = 'test\\data\\saved_cal.zip'
+    with open('data\\example_cal\\test_cal.p', 'rb') as f:
+        expected_cal = pickle.load(f)
+    zip_filename = 'data\\example_cal\\test.zip'
 
     calibrator = jowr.Calibrator()
     calibration = calibrator.calibrate(zip_filename)
-    assert (calibration == expected_cal)
+    assert np.allclose(calibration['matrix'], expected_cal['matrix'])
+    assert np.allclose(calibration['distortion'],
+                          expected_cal['distortion'])
 
 
 def test_cal_from_folder():
@@ -47,7 +51,7 @@ def test_save_load():
 
     calibrator = jowr.Calibrator()
     calibration = calibrator.load(cal_filename)
-    assert(calibration == expected_cal)
+    assert (calibration == expected_cal)
 
 
 def test_bad_images():

@@ -57,8 +57,8 @@ class VideoReader(BaseReader):
             del self
             raise IOError('File not found')
 
-        width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.__native_resolution = (width, height)
         self.__resolution = self.__native_resolution
 
@@ -114,8 +114,8 @@ class CameraReader(BaseReader):
     def __init__(self, source):
         super(CameraReader, self).__init__(source)
 
-        width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.__resolution = (width, height)
 
     def __repr__(self):

@@ -2,11 +2,13 @@ import os
 import zipfile
 import pickle
 import glob
+import collections
 
 import jowr
 import cv2
 import numpy as np
 
+# TODO method to write the calibration to plain text
 
 class Calibrator(object):
     """ Class to help with camera calibration.
@@ -106,6 +108,7 @@ class Calibrator(object):
                     if self.resolution and self.resolution != resolution:
                         raise IOError(
                             "Calibration images are different resolutions.")
+                    self.resolution = resolution
                     self.process(image, '')
 
             self.calculate_calibration()
@@ -141,6 +144,7 @@ class Calibrator(object):
         self.calculate_calibration()
 
     def save(self, filename):
+        # I'd like to use json to make it readable, but numpy arrays are awkward
         with open(filename, 'wb') as cal_file:
             pickle.dump(self.calibration, cal_file)
 
@@ -149,6 +153,12 @@ class Calibrator(object):
     def load(self, filename):
         with open(filename, 'rb') as cal_file:
             self.calibration = pickle.load(cal_file)
+            if not isinstance(self.calibration, dict):
+                raise TypeError("Loaded calibation is not a dictionary")
+            elif not all( [this_key in self.calibration.keys()
+                           for this_key in ('error', 'matrix', 'distortion')]):
+                raise TypeError("Calibration dictionary "
+                                "doesn't have all the information I need")
             return self.calibration
 
     def process(self, frame, save_name):
@@ -202,14 +212,16 @@ class Calibrator(object):
         if not self.resolution:
             raise ValueError("Image resolution not detected")
 
+        # Could use a namedtuple, but then a simple dict is a bit more
+        # convenient for external use?
         (self.calibration['error'],
-         self.calibration['A'],
-         self.calibration['dist'],
-         self.calibration['rvecs'],
-         self.calibration['tvecs']) = cv2.calibrateCamera(self.object_points,
+         self.calibration['matrix'],
+         self.calibration['distortion'],
+         _, _) = cv2.calibrateCamera(self.object_points,
                                                           self.img_points,
                                                           self.resolution,
                                                           None, None)
+        self.calibration['resolution'] = self.resolution
 
     @staticmethod
     def generate_chequer_points(chequer_size, chequer_scale):
@@ -223,11 +235,18 @@ class Calibrator(object):
         return chequer_points
 
 
-if __name__ == '__main__':
-    reader = jowr.CameraReader(2)
-    reader.resolution = (1920, 1080)
+def undistort(frame, calibration):
+    if not jowr.resolution(frame) == calibration['resolution']:
+        raise ValueError("Resolution of image not equal to that of calibration")
+    return cv2.undistort(frame,
+                         calibration['matrix'],
+                         calibration['distortion'])
 
-    c = Calibrator(chequer_scale=2.5)
-    c.calibrate(reader, 'wide.zip')
-    c.save('wide_cal.p')
+
+if __name__ == '__main__':
+    reader = jowr.CameraReader(0)
+
+    c = Calibrator(chequer_scale=50)
+    c.calibrate(reader, 'test.zip')
+    c.save('test_cal.p')
     # c.calibrate('test.zip')

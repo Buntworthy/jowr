@@ -9,5 +9,5 @@ import numpy as np
 # Test opening camera - open, not connected, closed
 # Test opening video - open, not connected, closed
 # Test reading frames
-# Test resolution and channels
+# Test resolution setting of video
 # Test file formats

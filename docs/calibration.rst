@@ -32,6 +32,22 @@ calibration pattern and press the `s` key to capture a frame and detect the
 corners. Do this a bunch of times a different angles, then press `Esc` to
 finish and calculate the calibration.
 
+Example
+^^^^^^^
+
+An example of a Python program which helps you make a calibration for a webcam,
+then displays the output of the webcam with calibration applied::
+
+    calibrator = jowr.Calibrator(chequer_scale=20)
+    webcam = jowr.CameraReader(0)
+    calibration = calibrator.calibrate(webcam)
+    for frame in webcam.frames():
+        undistored_frame = jowr.undistort(frame, calibration)
+        jowr.show(undistored_frame,
+                  window_name='Calibrated webcam',
+                  wait_time=30,
+                  auto_close=False)
+
 Other options
 -------------
 
@@ -60,6 +76,7 @@ to a zip file `save_name.zip`::
     #
     # Load the calibratione file again
     calibrator.load('calibration_file.p')
+
 
 TODO
 ----

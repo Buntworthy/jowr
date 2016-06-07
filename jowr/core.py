@@ -82,3 +82,4 @@ def channels(image):
         return im_shape[2]
     else:
         raise ValueError("Array rank is not 2 or 3.")
+
