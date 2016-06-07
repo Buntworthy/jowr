@@ -2,11 +2,11 @@ import os
 import zipfile
 import pickle
 import glob
-import collections
 
 import jowr
 import cv2
 import numpy as np
+
 
 # TODO method to write the calibration to plain text
 
@@ -103,12 +103,7 @@ class Calibrator(object):
                     image = cv2.imread(filename)
                     # TODO be careful here!
                     os.remove(filename)
-                    # Check the resolution
-                    resolution = jowr.resolution(image)
-                    if self.resolution and self.resolution != resolution:
-                        raise IOError(
-                            "Calibration images are different resolutions.")
-                    self.resolution = resolution
+                    self.check_resolution(image)
                     self.process(image, '')
 
             self.calculate_calibration()
@@ -132,14 +127,9 @@ class Calibrator(object):
         self.calculate_calibration()
 
     def calibrate_folder(self, folder):
-        # TODO other file formats
-        for filename in glob.glob('folder\\*.png'):
+        for filename in jowr.find_images(folder):
             image = cv2.imread(filename)
-            # Check the resolution
-            resolution = jowr.resolution(image)
-            if self.resolution and self.resolution != resolution:
-                raise IOError(
-                    "Calibration images are different resolutions.")
+            self.check_resolution(image)
             self.process(image, '')
         self.calculate_calibration()
 
@@ -155,8 +145,8 @@ class Calibrator(object):
             self.calibration = pickle.load(cal_file)
             if not isinstance(self.calibration, dict):
                 raise TypeError("Loaded calibation is not a dictionary")
-            elif not all( [this_key in self.calibration.keys()
-                           for this_key in ('error', 'matrix', 'distortion')]):
+            elif not all([this_key in self.calibration.keys()
+                          for this_key in ('error', 'matrix', 'distortion')]):
                 raise TypeError("Calibration dictionary "
                                 "doesn't have all the information I need")
             return self.calibration
@@ -202,6 +192,13 @@ class Calibrator(object):
                 jowr.add_to_zip(frame, save_name)
         return ret
 
+    def check_resolution(self, image):
+        resolution = jowr.resolution(image)
+        if self.resolution and self.resolution != resolution:
+            raise IOError(
+                "Calibration images are different resolutions.")
+        self.resolution = resolution
+
     def calculate_calibration(self):
 
         # Check we have everything we need
@@ -218,9 +215,9 @@ class Calibrator(object):
          self.calibration['matrix'],
          self.calibration['distortion'],
          _, _) = cv2.calibrateCamera(self.object_points,
-                                                          self.img_points,
-                                                          self.resolution,
-                                                          None, None)
+                                     self.img_points,
+                                     self.resolution,
+                                     None, None)
         self.calibration['resolution'] = self.resolution
 
     @staticmethod
