@@ -22,3 +22,13 @@ def test_channels():
 
     assert (jowr.channels(test_image_bw) == 1)
     assert (jowr.channels(test_image_colour) == 3)
+
+def test_find_images():
+    folder = 'data/images'
+    files = ('monkey_Luc_Viatour.jpg',
+             'penguin_Gorfou_Sauteur.jpg')
+
+    # Extract the file names
+    found_images = [os.path.split(this_file)[1] for this_file in jowr.find_images(folder)]
+
+    assert set(found_images) == set(files)

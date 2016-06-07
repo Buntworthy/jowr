@@ -1,4 +1,6 @@
+import shutil
 import sys, os
+from zipfile import ZipFile
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
@@ -24,47 +26,57 @@ def test_generate_chequer_points():
     assert np.array_equal(generated_points, expected_points)
 
 
-def test_cal_from_zip():
-    with open('data\\example_cal\\test_cal.p', 'rb') as f:
+def test_cal_from_zip_save_load():
+    with open('data/example_cal/test_cal.p', 'rb') as f:
         expected_cal = pickle.load(f)
-    zip_filename = 'data\\example_cal\\test.zip'
+    zip_filename = 'data/example_cal/test.zip'
 
     calibrator = jowr.Calibrator()
     calibration = calibrator.calibrate(zip_filename)
     assert np.allclose(calibration['matrix'], expected_cal['matrix'])
     assert np.allclose(calibration['distortion'],
-                          expected_cal['distortion'])
+                       expected_cal['distortion'])
+
+    # Test save/load
+    save_cal = 'my_cal.p'
+    calibrator.save(save_cal)
+    loaded_calibration = calibrator.load(save_cal)
+    assert np.allclose(loaded_calibration['matrix'], expected_cal['matrix'])
+    assert np.allclose(loaded_calibration['distortion'],
+                       expected_cal['distortion'])
+    os.remove(save_cal)
 
 
 def test_cal_from_folder():
-    expected_cal = None
-    foldername = 'test\\data\\example_cal'
+    with open('data/example_cal/test_cal.p', 'rb') as f:
+        expected_cal = pickle.load(f)
+    zip_filename = 'data/example_cal/test.zip'
+    folder_name = 'data/example_cal/extracted'
+
+    # Extract the images to a folder
+    with ZipFile(zip_filename, 'r') as myzip:
+        myzip.extractall(folder_name)
 
     calibrator = jowr.Calibrator()
-    calibration = calibrator.calibrate(foldername)
-    assert (calibration == expected_cal)
+    calibration = calibrator.calibrate(folder_name)
 
+    # Clean up
+    shutil.rmtree(folder_name)
 
-def test_save_load():
-    expected_cal = None
-    cal_filename = 'filename.p'
-
-    calibrator = jowr.Calibrator()
-    calibration = calibrator.load(cal_filename)
-    assert (calibration == expected_cal)
+    assert np.allclose(calibration['matrix'], expected_cal['matrix'])
+    assert np.allclose(calibration['distortion'],
+                       expected_cal['distortion'])
 
 
 def test_bad_images():
-    bad_folder = 'test\\data\\bad_cal'
-
+    bad_folder = 'data/images'
     calibrator = jowr.Calibrator()
     with pytest.raises(IOError):
         calibrator.calibrate(bad_folder)
 
 
 def test_no_images():
-    no_image_folder = 'test\\data\\empty'
-
+    no_image_folder = 'data/empty'
     calibrator = jowr.Calibrator()
     with pytest.raises(ValueError):
         calibrator.calibrate(no_image_folder)
