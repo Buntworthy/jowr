@@ -3,6 +3,7 @@ import os
 import zipfile
 import datetime
 import numpy as np
+import glob
 
 # Constants
 DEFAULT_WINDOW_NAME = "default"
@@ -83,3 +84,11 @@ def channels(image):
     else:
         raise ValueError("Array rank is not 2 or 3.")
 
+
+def find_images(folder):
+    """Find all image types in a folder."""
+    image_types = ('.tiff', '.tif', '.png', 'jpg', 'jpeg', 'bmp')
+    images = []
+    for image_type in image_types:
+        images.extend(glob.glob(os.path.join(folder, '*' + image_type)))
+    return images
