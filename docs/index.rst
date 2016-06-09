@@ -1,12 +1,22 @@
-.. jowr documentation master file, created by
-   sphinx-quickstart on Fri Apr 15 16:44:46 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to jowr's documentation!
 ================================
 
-jowr is a bunch of helper functions which make using OpenCV python interface a bit friendlier.
+jowr is a bunch of helper functions and utilities which make using the OpenCV
+Python interface a bit friendlier.
+
+Introduction
+------------
+
+jowr is a work in progress, currently it only really covers reading frames from
+a video or camera source, and camera calibration.
+
+Things to do next:
+
+- Pipelines (Stringing together multiple image processing operations)
+- Image transforms (Common transform helper functions)
+- Feature extraction and matching
+- Line detection (Plotting function, representation transforms, filtering)
+- Edge detection (Automatic threshold guessing and parameter checking)
 
 An example
 ----------
@@ -49,11 +59,7 @@ Contents:
 
    intro
    basics
-   processing
    calibration
-
-.. automodule:: jowr.data
-   :members:
 
 Indices and tables
 ==================
