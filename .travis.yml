@@ -13,6 +13,7 @@ install:
   - conda info -a
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION opencv
   - source activate test-environment
+  - conda list
 
 script:
   - py.test
