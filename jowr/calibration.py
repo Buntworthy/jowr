@@ -65,25 +65,37 @@ class Calibrator(object):
                                                            self.chequer_scale)
 
     def calibrate(self, cam, save_name=''):
+        """ Calibrate a camera, video, zipfile, or directory of images.
+
+        Args:
+            cam: Source for calibration, this could be a jowr.BaseReader, path
+                to a zipfile, or a directory.
+            save_name (Optional[str]): Path to zipfile to save images. If empty
+                no images are saved.
+        """
         # A camera/video
         if isinstance(cam, jowr.BaseReader):
             self.calibrate_reader(cam, save_name)
-
         # An existing zip file of images
         elif zipfile.is_zipfile(cam):
             self.calibrate_zip(cam)
-
         # An existing folder of images
         elif os.path.isdir(cam):
             self.calibrate_folder(cam)
         # I don't know what this is
         else:
             raise TypeError("Unknown input type, "
-                            "not a camera, video, or images.")
+                            "not a camera, video, zipfile or directory.")
 
         return self.calibration
 
     def calibrate_zip(self, cam):
+        """ Calibrate all the png files in a zip archive.
+
+        Args:
+            cam (str): Path to the zipfile.
+
+        """
         with zipfile.ZipFile(cam, 'r') as zip_file:
             zip_members = [f.filename for f in zip_file.filelist]
             # TODO add other extension
@@ -109,7 +121,13 @@ class Calibrator(object):
             self.calculate_calibration()
 
     def calibrate_reader(self, cam, save_name):
-        # Take some images with the camera
+        """ Calibrate images selected from a camera or video.
+
+        Args:
+            cam (jowr.BaseReader): Image source.
+            save_name (str): Path to zipfile to save images.
+
+        """
         print("Press s key to capture an image. Press Esc to finish.")
         self.resolution = cam.resolution
         for frame in cam.frames():
@@ -127,6 +145,13 @@ class Calibrator(object):
         self.calculate_calibration()
 
     def calibrate_folder(self, folder):
+        """ Calibrate all the png files in a directory.
+
+        Args:
+            folder (str): directory to search for images (not including
+                subdirectories).
+
+        """
         for filename in jowr.find_images(folder):
             image = cv2.imread(filename)
             self.check_resolution(image)
@@ -134,13 +159,22 @@ class Calibrator(object):
         self.calculate_calibration()
 
     def save(self, filename):
+        """ Save the current calibration to a file.
+
+        Args:
+            filename (str): path to save file.
+        """
         # I'd like to use json to make it readable, but numpy arrays are awkward
         with open(filename, 'wb') as cal_file:
             pickle.dump(self.calibration, cal_file)
 
     # TODO some sort of validation
-
     def load(self, filename):
+        """ Load a calibration from file.
+
+        Args:
+            filename (str): path to the previously pickled file.
+        """
         with open(filename, 'rb') as cal_file:
             self.calibration = pickle.load(cal_file)
             if not isinstance(self.calibration, dict):
@@ -219,6 +253,14 @@ class Calibrator(object):
                                      self.resolution,
                                      None, None)
         self.calibration['resolution'] = self.resolution
+
+    def print_to_file(self, filename):
+        # if not self.calibration:
+        # TODO raise an error
+        with open(filename, 'w') as cal_file:
+            for key, val in self.calibration.items():
+                cal_file.write('{}:\n'.format(key))
+                cal_file.write('{}\n'.format(val))
 
     @staticmethod
     def generate_chequer_points(chequer_size, chequer_scale):
