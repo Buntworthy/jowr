@@ -57,6 +57,7 @@ class Calibrator(object):
         self.object_points = []  # 3d point in real world space
         self.img_points = []  # 2d points in image plane.
         self.resolution = None  # resolution of the images used for calibration
+        self.showFrames = True # Display frames being processed
 
         self.chequer_size = chequer_size
         self.chequer_scale = chequer_scale
@@ -217,9 +218,10 @@ class Calibrator(object):
                                                        (self.chequer_size[0],
                                                         self.chequer_size[1]),
                                                        corners, ret)
-            jowr.show(modified_frame,
-                      window_name='Detected_corners',
-                      wait_time=500)
+            if self.showFrames:
+                jowr.show(modified_frame,
+                          window_name='Detected_corners',
+                          wait_time=500)
 
             if save_name:
                 # Add to the zip file

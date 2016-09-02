@@ -32,6 +32,7 @@ def test_cal_from_zip_save_load():
     zip_filename = 'data/example_cal/test.zip'
 
     calibrator = jowr.Calibrator()
+    calibrator.showFrames = False # Don't show frames during test
     calibration = calibrator.calibrate(zip_filename)
     assert np.allclose(calibration['matrix'], expected_cal['matrix'])
     assert np.allclose(calibration['distortion'],
@@ -58,6 +59,7 @@ def test_cal_from_folder():
         myzip.extractall(folder_name)
 
     calibrator = jowr.Calibrator()
+    calibrator.showFrames = False  # Don't show frames during test
     calibration = calibrator.calibrate(folder_name)
 
     # Clean up
