@@ -4,8 +4,9 @@ import abc
 import time
 import jowr
 
-
 # TODO give the source a name
+
+video_extensions = ('.mp4', '.avi', '.mov')
 
 
 class BaseReader(metaclass=abc.ABCMeta):
@@ -158,7 +159,6 @@ class CameraReader(BaseReader):
 
 
 class ImageSequenceReader():
-
     def __init__(self, source):
         # check that the path exists and has images
         self.path = source
@@ -167,10 +167,10 @@ class ImageSequenceReader():
         self.images = jowr.find_images(self.path)
         self.images.sort()
 
-
     def frames(self, start=0, end=-1):
         for image_path in self.images[start:end]:
             yield cv2.imread(image_path)
+
 
 if __name__ == '__main__':
     import jowr
@@ -178,3 +178,18 @@ if __name__ == '__main__':
     c = VideoReader('..\\data\\sun.mp4')
     c.resolution = (1000, 300)
     jowr.play(c.frames(1, 200))
+
+
+def make_reader(source):
+    """Helper function to create the appropriate reader from the source"""
+    # If it's a video file make a VideoReader
+    if source.endswith(video_extensions):
+        return VideoReader(source)
+    # If it's a integer make a CamReader
+    elif isinstance(source, int):
+        return CameraReader(source)
+    # If it's a path make a ImageSequenceReader
+    elif os.path.isdir(source):
+        return ImageSequenceReader(source)
+    else:
+        raise TypeError('Unrecognised source type')
