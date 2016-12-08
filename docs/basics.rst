@@ -42,3 +42,9 @@ jowr also provides a convenience method for playing all the frames produced by a
     vid = jowr.VideoReader('some_video.mp4')
     jowr.play([some_processing(frame) for frame in vid.frames()])
 
+Reading other things
+----------
+
+jowr also provides readers for attached webcams (:py:class:`~jowr.CameraReader`) and folders of sequenctial images
+ (:py:class:`~jowr.ImageSequenceReader`). TO help you make the right thing call :py:meth:`~jowr.make_reader` passing
+in the video/camera/sequence source and it will return the object you require.

@@ -1,43 +1,37 @@
+from contextlib import contextmanager
+
 import cv2
 import os
-import abc
-import time
 import jowr
 
-# TODO give the source a name
 
-video_extensions = ('.mp4', '.avi', '.mov')
-
-
-class BaseReader(metaclass=abc.ABCMeta):
-    """Base class for reading from video sources."""
-
+class Capture:
     def __init__(self, source):
-        self.cap = cv2.VideoCapture(source)
         self.source = source
+        self.next_frame_number = 0
+        self.cap = None
 
-        if not self.cap.isOpened():
-            del self
-            raise IOError('Could not open specified source')
+    @contextmanager
+    def open(self):
+        self.cap = cv2.VideoCapture(self.source)
+        yield
+        self.cap.release()
 
-    @abc.abstractproperty
-    def resolution(self):
-        pass
+    @contextmanager
+    def open_frames(self):
+        with self.open():
+            yield Frames(self)  # an iterable
 
-    def __bool__(self):
-        return self.cap.isOpened
-
-    def __del__(self):
-        """Release the video file."""
-        if self.cap:
-            self.cap.release()
-
-    @abc.abstractmethod
-    def frames(self):
-        pass
+    def next_frame(self):
+        exists, frame = self.cap.read()
+        self.next_frame_number += 1
+        if exists:
+            return frame
+        else:
+            raise IndexError
 
 
-class VideoReader(BaseReader):
+class Video(Capture):
     """Class to read video files.
 
     Wraps the existing VideoCapture class of OpenCV.
@@ -50,112 +44,61 @@ class VideoReader(BaseReader):
     """
 
     def __init__(self, source):
-        """Open a video file."""
-        super(VideoReader, self).__init__(source)
-
+        super().__init__(source)
         # Check the file exists
         if not os.path.isfile(source):
-            del self
-            raise IOError('File not found')
+            raise FileNotFoundError('File {}, not found'.format(source))
 
-        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.__native_resolution = (width, height)
-        self.__resolution = self.__native_resolution
+        with self.open():
+            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.resolution = (width, height)
+            self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    # TODO property
+    def get_frame(self, index):
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+        self.next_frame_number = index
+        return self.next_frame()
 
     def __repr__(self):
-        return 'VideoReader({})'.format(self.source)
+        return 'Video({})'.format(self.source)
 
-    @property
-    def resolution(self):
-        return self.__resolution
-
-    @resolution.setter
-    def resolution(self, new_resolution):
-        self.__resolution = new_resolution
-
-    def frames(self, start=0, end=-1):
-        """Generator to return frames from the video.
-
-        Args:
-            start: 0-index start frame (default 0).
-            end: 0-index end frame, -1 for end of video (default -1).
-
-        """
-
-        # Set the starting frame
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-        # Read the first frame
-        ret, frame = self.cap.read()
-        while ret:
-            if self.__resolution == self.__native_resolution:
-                yield frame
-            else:
-                # Resize the frame
-                # TODO option to preserve aspect
-                yield cv2.resize(frame, self.__resolution)
-            # Check if we have reached the last frame
-            if end > 0:
-                frame_number = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
-                if frame_number > end:
-                    break
-            ret, frame = self.cap.read()
+    def __len__(self):
+        return self.frame_count
 
 
-class CameraReader(BaseReader):
-    """Class to read from an attached Camera.
-
-    Wraps the existing VideoCapture class of OpenCV.
-
-    Attributes:
-        cap: OpenCV VideoCapture object.
-
-    """
-
+class Camera(Capture):
     def __init__(self, source):
-        super(CameraReader, self).__init__(source)
+        super().__init__(source)
 
-        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.__resolution = (width, height)
+        with self.open():
+            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.resolution = (width, height)
+
+    def get_frame(self, index):
+        if index == self.next_frame_number:
+            return self.next_frame()
+        else:
+            raise NotImplementedError
 
     def __repr__(self):
-        return 'CameraReader({})'.format(self.source)
+        return 'Camera({})'.format(self.source)
 
-    @property
-    def resolution(self):
-        return self.__resolution
-
-    @resolution.setter
-    def resolution(self, new_resolution):
-        (width, height) = new_resolution
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-        # Check the resolution
-        if not (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) == width and
-                        self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == height):
-            raise ValueError("Unsupported camera resolution")
-        else:
-            self.__resolution = (width, height)
-
-    def frames(self, duration=-1):
-        """Generator to return frames from the video.
-
-        Args:
-            duration: length of video in seconds to capture (default -1).
-
-        """
-
-        start_time = time.time()
-        # Read the first frame
-        ret, frame = self.cap.read()
-        while ret:
-            yield frame
-            # Check if we have reached the last frame
-            if 0 < duration < (time.time() - start_time):
-                break
-            ret, frame = self.cap.read()
+        # @resolution.setter
+        # def resolution(self, new_resolution):
+        #     (width, height) = new_resolution
+        #     self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        #     self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        #
+        #     # Check the resolution
+        #     if not (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) == width and
+        #                     self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == height):
+        #         raise ValueError("Unsupported camera resolution")
+        #     else:
+        #         self.__resolution = (width, height)
+        #
 
 
 class ImageSequenceReader():
@@ -172,24 +115,62 @@ class ImageSequenceReader():
             yield cv2.imread(image_path)
 
 
-if __name__ == '__main__':
-    import jowr
+class Frames:
+    """Iterable over frames from a non memory source i.e. a reader
 
-    c = VideoReader('..\\data\\sun.mp4')
-    c.resolution = (1000, 300)
-    jowr.play(c.frames(1, 200))
+    with video.open_frames() as frames:
+        my_frames = list(frames)
+        for frame in frames[2:40:2]:
+            process(frame)
 
+        """
 
-def make_reader(source):
-    """Helper function to create the appropriate reader from the source"""
-    # If it's a video file make a VideoReader
-    if source.endswith(video_extensions):
-        return VideoReader(source)
-    # If it's a integer make a CamReader
-    elif isinstance(source, int):
-        return CameraReader(source)
-    # If it's a path make a ImageSequenceReader
-    elif os.path.isdir(source):
-        return ImageSequenceReader(source)
-    else:
-        raise TypeError('Unrecognised source type')
+    def __init__(self, reader, start=0, stop=0, step=1):
+        self.reader = reader
+
+        self.stop = stop
+        self.step = step
+        self.next_frame_number = start
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.next_frame_number >= self.stop > 0:
+            raise StopIteration
+
+        try:
+            if self.next_frame_number != self.reader.next_frame_number:
+                frame = self.reader.get_frame(self.next_frame_number)
+            else:
+                frame = self.reader.next_frame()
+        except IndexError:
+            raise StopIteration
+        self.next_frame_number += self.step
+        return frame
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            if item < self.reader.frame_count:
+                return self.reader.get_frame(item)
+        elif isinstance(item, slice):
+            return Frames(self.reader,
+                          0 if item.start is None else item.start,
+                          item.stop,
+                          0 if item.step is None else item.step)
+        else:
+            raise TypeError
+
+# def make_reader(source):
+#     """Helper function to create the appropriate reader from the source"""
+#     # If it's a video file make a VideoReader
+#     if source.endswith(video_extensions):
+#         return VideoReader(source)
+#     # If it's a integer make a CamReader
+#     elif isinstance(source, int):
+#         return CameraReader(source)
+#     # If it's a path make a ImageSequenceReader
+#     elif os.path.isdir(source):
+#         return ImageSequenceReader(source)
+#     else:
+#         raise TypeError('Unrecognised source type')
