@@ -11,6 +11,12 @@ class Capture:
         self.next_frame_number = 0
         self.cap = None
 
+        with self.open():
+            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.resolution = (width, height)
+            self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
     @contextmanager
     def open(self):
         self.cap = cv2.VideoCapture(self.source)
@@ -49,12 +55,6 @@ class Video(Capture):
         if not os.path.isfile(source):
             raise FileNotFoundError('File {}, not found'.format(source))
 
-        with self.open():
-            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            self.resolution = (width, height)
-            self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
     # TODO property
     def get_frame(self, index):
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
@@ -72,11 +72,6 @@ class Camera(Capture):
     def __init__(self, source):
         super().__init__(source)
 
-        with self.open():
-            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            self.resolution = (width, height)
-
     def get_frame(self, index):
         if index == self.next_frame_number:
             return self.next_frame()
@@ -85,20 +80,6 @@ class Camera(Capture):
 
     def __repr__(self):
         return 'Camera({})'.format(self.source)
-
-        # @resolution.setter
-        # def resolution(self, new_resolution):
-        #     (width, height) = new_resolution
-        #     self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        #     self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        #
-        #     # Check the resolution
-        #     if not (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) == width and
-        #                     self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == height):
-        #         raise ValueError("Unsupported camera resolution")
-        #     else:
-        #         self.__resolution = (width, height)
-        #
 
 
 class ImageSequenceReader():
@@ -160,17 +141,3 @@ class Frames:
                           0 if item.step is None else item.step)
         else:
             raise TypeError
-
-# def make_reader(source):
-#     """Helper function to create the appropriate reader from the source"""
-#     # If it's a video file make a VideoReader
-#     if source.endswith(video_extensions):
-#         return VideoReader(source)
-#     # If it's a integer make a CamReader
-#     elif isinstance(source, int):
-#         return CameraReader(source)
-#     # If it's a path make a ImageSequenceReader
-#     elif os.path.isdir(source):
-#         return ImageSequenceReader(source)
-#     else:
-#         raise TypeError('Unrecognised source type')

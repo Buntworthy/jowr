@@ -75,7 +75,8 @@ class Calibrator(object):
                 no images are saved.
         """
         # A camera/video
-        if isinstance(cam, jowr.BaseReader):
+        # TODO think about a consistent interface to image collections
+        if isinstance(cam, jowr.Capture):
             self.calibrate_reader(cam, save_name)
         # An existing zip file of images
         elif zipfile.is_zipfile(cam):
@@ -121,29 +122,30 @@ class Calibrator(object):
 
             self.calculate_calibration()
 
-    def calibrate_reader(self, cam, save_name):
+    def calibrate_reader(self, reader, save_name):
         """ Calibrate images selected from a camera or video.
 
         Args:
-            cam (jowr.BaseReader): Image source.
+            reader (jowr.BaseReader): Image source.
             save_name (str): Path to zipfile to save images.
 
         """
         print("Press s key to capture an image. Press Esc to finish.")
-        self.resolution = cam.resolution
-        for frame in cam.frames():
-            # Detect corners for each image during acquisition
-            stop = jowr.show(frame, 'Camera',
-                             wait_time=1,
-                             callbacks={
-                                 # Process a frame on s key pressed
-                                 's': lambda: self.process(frame,
-                                                           save_name)
-                             },
-                             auto_close=False)
-            if stop:
-                break
-        self.calculate_calibration()
+        self.resolution = reader.resolution
+        with reader.open_frames() as frames:
+            for frame in frames():
+                # Detect corners for each image during acquisition
+                stop = jowr.show(frame, 'Camera',
+                                 wait_time=1,
+                                 callbacks={
+                                     # Process a frame on s key pressed
+                                     's': lambda: self.process(frame,
+                                                               save_name)
+                                 },
+                                 auto_close=False)
+                if stop:
+                    break
+            self.calculate_calibration()
 
     def calibrate_folder(self, folder):
         """ Calibrate all the png files in a directory.
@@ -285,7 +287,7 @@ def undistort(frame, calibration):
 
 
 if __name__ == '__main__':
-    reader = jowr.CameraReader(0)
+    reader = jowr.Camera(0)
 
     c = Calibrator(chequer_scale=50)
     c.calibrate(reader, 'test.zip')
