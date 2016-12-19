@@ -6,6 +6,21 @@ import jowr
 
 
 class Capture:
+    """Base class for readers that interact with OpenCVs VideoCapture object.
+
+    Args:
+        source: Video source, either an index to webcam or path to video file
+
+    Attributes:
+        source
+        next_frame_number (int): 0-based index of the next frame to be called
+            using `next_frame`
+        cap: OpenCV VideoCapture object, this should be accessed using the
+            `open` context manager
+        resolution (int, int): Native resolution of the source.
+        frame_count (int): Total number of frames, 0 if a webcam
+
+    """
     def __init__(self, source):
         self.source = source
         self.next_frame_number = 0
@@ -19,16 +34,25 @@ class Capture:
 
     @contextmanager
     def open(self):
+        """Opens the `VideoCapture` object and releases when done."""
         self.cap = cv2.VideoCapture(self.source)
         yield
         self.cap.release()
 
     @contextmanager
     def open_frames(self):
+        """Returns a `Frames` object to iterate over the video."""
         with self.open():
-            yield Frames(self)  # an iterable
+            yield Frames(self)
 
     def next_frame(self):
+        """Returns the next frame.
+
+        Raises:
+            IndexError: I   f the end of the source has been reached.
+
+        """
+        # TODO raise custom exception if not cap
         exists, frame = self.cap.read()
         self.next_frame_number += 1
         if exists:
@@ -40,10 +64,11 @@ class Capture:
 class Video(Capture):
     """Class to read video files.
 
-    Wraps the existing VideoCapture class of OpenCV.
+    jowr's `Video` class wraps the existing `VideoCapture` class of OpenCV when
+    the specified source is a path to a video file.
 
-    Attributes:
-        cap: OpenCV VideoCapture object.
+    Args:
+        source (str): Path to video file.
 
     Raises:
         IOError: Specified video file was not found.
@@ -51,12 +76,21 @@ class Video(Capture):
 
     def __init__(self, source):
         super().__init__(source)
-        # Check the file exists
         if not os.path.isfile(source):
             raise FileNotFoundError('File {}, not found'.format(source))
 
-    # TODO property
     def get_frame(self, index):
+        """Get a frame from the Video.
+
+        Note:
+            It is not recommended to call this method directly, frames from the
+            webcam should be accessed using the `Frames` object returned by the
+            `open_frames` method.
+
+        Args:
+            index (int): 0-based index to the frame to get.
+
+        """
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
         self.next_frame_number = index
         return self.next_frame()
@@ -69,10 +103,39 @@ class Video(Capture):
 
 
 class Camera(Capture):
+    """Class to read an attached webcam.
+
+        jowr's `Video` class wraps the existing `VideoCapture` class of OpenCV when
+        the specified source is a path to a video file.
+
+        Args:
+            source (str): Path to video file.
+
+        Raises:
+            IOError: Specified video file was not found.
+        """
     def __init__(self, source):
         super().__init__(source)
 
     def get_frame(self, index):
+        """Get a frame from the Webcam.
+
+        Note:
+            It is not recommended to call this method directly, frames from the
+            webcam should be accessed using the `Frames` object returned by the
+            `open_frames` method.
+
+        Args:
+            index (int): 0-based index to the frame to get.
+
+        Note:
+            The requested index must match the `next_frame_number` of the
+            `Camera`.
+
+        Raises:
+            NotImplementedError: If the requested index does not match the
+            next_frame_number.
+        """
         if index == self.next_frame_number:
             return self.next_frame()
         else:
@@ -82,33 +145,19 @@ class Camera(Capture):
         return 'Camera({})'.format(self.source)
 
 
-class ImageSequenceReader():
-    def __init__(self, source):
-        # check that the path exists and has images
-        self.path = source
-        # make a list of image files in the path
-        # TODO a more robust way of parsing image sequences
-        self.images = jowr.find_images(self.path)
-        self.images.sort()
-
-    def frames(self, start=0, end=-1):
-        for image_path in self.images[start:end]:
-            yield cv2.imread(image_path)
-
-
 class Frames:
-    """Iterable over frames from a non memory source i.e. a reader
+    """Iterable over frames from a non-memory source i.e. a reader.
 
-    with video.open_frames() as frames:
-        my_frames = list(frames)
-        for frame in frames[2:40:2]:
-            process(frame)
+    Args:
+        reader: `Video` or `Camera` object
+        start (int): Start frame.
+        stop (int): End frame.
+        step (int): Increment between frames
 
-        """
+    """
 
     def __init__(self, reader, start=0, stop=0, step=1):
         self.reader = reader
-
         self.stop = stop
         self.step = step
         self.next_frame_number = start
