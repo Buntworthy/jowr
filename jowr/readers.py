@@ -1,165 +1,193 @@
+from contextlib import contextmanager
+
 import cv2
 import os
-import abc
-import time
+import jowr
 
 
-# TODO give the source a name
-# TODO file sequence reader?
+class Capture:
+    """Base class for readers that interact with OpenCVs VideoCapture object.
 
-
-class BaseReader(metaclass=abc.ABCMeta):
-    """Base class for reading from video sources."""
-
-    def __init__(self, source):
-        self.cap = cv2.VideoCapture(source)
-        self.source = source
-
-        if not self.cap.isOpened():
-            del self
-            raise IOError('Could not open specified source')
-
-    @abc.abstractproperty
-    def resolution(self):
-        pass
-
-    def __bool__(self):
-        return self.cap.isOpened
-
-    def __del__(self):
-        """Release the video file."""
-        if self.cap:
-            self.cap.release()
-
-    @abc.abstractmethod
-    def frames(self):
-        pass
-
-
-class VideoReader(BaseReader):
-    """Class to read video files.
-
-    Wraps the existing VideoCapture class of OpenCV.
+    Args:
+        source: Video source, either an index to webcam or path to video file
 
     Attributes:
-        cap: OpenCV VideoCapture object.
+        source
+        next_frame_number (int): 0-based index of the next frame to be called
+            using `next_frame`
+        cap: OpenCV VideoCapture object, this should be accessed using the
+            `open` context manager
+        resolution (int, int): Native resolution of the source.
+        frame_count (int): Total number of frames, 0 if a webcam
+
+    """
+    def __init__(self, source):
+        self.source = source
+        self.next_frame_number = 0
+        self.cap = None
+
+        with self.open():
+            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.resolution = (width, height)
+            self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    @contextmanager
+    def open(self):
+        """Opens the `VideoCapture` object and releases when done."""
+        self.cap = cv2.VideoCapture(self.source)
+        yield
+        self.cap.release()
+
+    @contextmanager
+    def open_frames(self):
+        """Returns a `Frames` object to iterate over the video."""
+        with self.open():
+            yield Frames(self)
+
+    def next_frame(self):
+        """Returns the next frame.
+
+        Raises:
+            IndexError: I   f the end of the source has been reached.
+
+        """
+        # TODO raise custom exception if not cap
+        exists, frame = self.cap.read()
+        self.next_frame_number += 1
+        if exists:
+            return frame
+        else:
+            raise IndexError
+
+
+class Video(Capture):
+    """Class to read video files.
+
+    jowr's `Video` class wraps the existing `VideoCapture` class of OpenCV when
+    the specified source is a path to a video file.
+
+    Args:
+        source (str): Path to video file.
 
     Raises:
         IOError: Specified video file was not found.
     """
 
     def __init__(self, source):
-        """Open a video file."""
-        super(VideoReader, self).__init__(source)
-
-        # Check the file exists
+        super().__init__(source)
         if not os.path.isfile(source):
-            del self
-            raise IOError('File not found')
+            raise FileNotFoundError('File {}, not found'.format(source))
 
-        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.__native_resolution = (width, height)
-        self.__resolution = self.__native_resolution
-
-    def __repr__(self):
-        return 'VideoReader({})'.format(self.source)
-
-    @property
-    def resolution(self):
-        return self.__resolution
-
-    @resolution.setter
-    def resolution(self, new_resolution):
-        self.__resolution = new_resolution
-
-    def frames(self, start=0, end=-1):
-        """Generator to return frames from the video.
+    def get_frame(self, index):
+        """Get a frame from the Video.
 
         Args:
-            start: 0-index start frame (default 0).
-            end: 0-index end frame, -1 for end of video (default -1).
+            index (int): 0-based index to the frame to get.
+
+        Note:
+            It is not recommended to call this method directly, frames from the
+            webcam should be accessed using the `Frames` object returned by the
+            `open_frames` method.
 
         """
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+        self.next_frame_number = index
+        return self.next_frame()
 
-        # Set the starting frame
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-        # Read the first frame
-        ret, frame = self.cap.read()
-        while ret:
-            if self.__resolution == self.__native_resolution:
-                yield frame
-            else:
-                # Resize the frame
-                # TODO option to preserve aspect
-                yield cv2.resize(frame, self.__resolution)
-            # Check if we have reached the last frame
-            if end > 0:
-                frame_number = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
-                if frame_number > end:
-                    break
-            ret, frame = self.cap.read()
+    def __repr__(self):
+        return 'Video({})'.format(self.source)
+
+    def __len__(self):
+        return self.frame_count
 
 
-class CameraReader(BaseReader):
-    """Class to read from an attached Camera.
+class Camera(Capture):
+    """Class to read an attached webcam.
 
-    Wraps the existing VideoCapture class of OpenCV.
+        jowr's `Video` class wraps the existing `VideoCapture` class of OpenCV when
+        the specified source is a path to a video file.
 
-    Attributes:
-        cap: OpenCV VideoCapture object.
+        Args:
+            source (str): Path to video file.
+
+        Raises:
+            IOError: Specified video file was not found.
+        """
+    def __init__(self, source):
+        super().__init__(source)
+
+    def get_frame(self, index):
+        """Get a frame from the Webcam.
+
+        Args:
+            index (int): 0-based index to the frame to get.
+
+        Raises:
+            NotImplementedError: If the requested index does not match the
+            next_frame_number.
+
+        Note:
+            The requested index must match the `next_frame_number` of the
+            `Camera`.
+
+        Note:
+            It is not recommended to call this method directly, frames from the
+            webcam should be accessed using the `Frames` object returned by the
+            `open_frames` method.
+
+        """
+        if index == self.next_frame_number:
+            return self.next_frame()
+        else:
+            raise NotImplementedError
+
+    def __repr__(self):
+        return 'Camera({})'.format(self.source)
+
+
+class Frames:
+    """Iterable over frames from a non-memory source i.e. a reader.
+
+    Args:
+        reader: `Video` or `Camera` object
+        start (int): Start frame.
+        stop (int): End frame.
+        step (int): Increment between frames
 
     """
 
-    def __init__(self, source):
-        super(CameraReader, self).__init__(source)
+    def __init__(self, reader, start=0, stop=0, step=1):
+        self.reader = reader
+        self.stop = stop
+        self.step = step
+        self.next_frame_number = start
 
-        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.__resolution = (width, height)
+    def __iter__(self):
+        return self
 
-    def __repr__(self):
-        return 'CameraReader({})'.format(self.source)
+    def __next__(self):
+        if self.next_frame_number >= self.stop > 0:
+            raise StopIteration
 
-    @property
-    def resolution(self):
-        return self.__resolution
+        try:
+            if self.next_frame_number != self.reader.next_frame_number:
+                frame = self.reader.get_frame(self.next_frame_number)
+            else:
+                frame = self.reader.next_frame()
+        except IndexError:
+            raise StopIteration
+        self.next_frame_number += self.step
+        return frame
 
-    @resolution.setter
-    def resolution(self, new_resolution):
-        (width, height) = new_resolution
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-        # Check the resolution
-        if not (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) == width and
-                        self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == height):
-            raise ValueError("Unsupported camera resolution")
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            if item < self.reader.frame_count:
+                return self.reader.get_frame(item)
+        elif isinstance(item, slice):
+            return Frames(self.reader,
+                          0 if item.start is None else item.start,
+                          item.stop,
+                          0 if item.step is None else item.step)
         else:
-            self.__resolution = (width, height)
-
-    def frames(self, duration=-1):
-        """Generator to return frames from the video.
-
-        Args:
-            duration: length of video in seconds to capture (default -1).
-
-        """
-
-        start_time = time.time()
-        # Read the first frame
-        ret, frame = self.cap.read()
-        while ret:
-            yield frame
-            # Check if we have reached the last frame
-            if 0 < duration < (time.time() - start_time):
-                break
-            ret, frame = self.cap.read()
-
-
-if __name__ == '__main__':
-    import jowr
-
-    c = VideoReader('..\\data\\sun.mp4')
-    c.resolution = (1000, 300)
-    jowr.play(c.frames(1, 200))
+            raise TypeError

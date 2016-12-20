@@ -16,6 +16,7 @@ def show(frame, window_name=DEFAULT_WINDOW_NAME, wait_time=0, callbacks=None,
     """Show the image. Return False if quit key pressed."""
     # Could have another method e.g. show and close, or flash?
     # TODO deal with different data types
+    # TODO seems natural for someone to pass in a generator of frames?
     cv2.imshow(window_name, frame)
     key_code = cv2.waitKey(wait_time)
     if callbacks and key_code>0 and (chr(key_code) in callbacks):
@@ -92,3 +93,6 @@ def find_images(folder):
     for image_type in image_types:
         images.extend(glob.glob(os.path.join(folder, '*' + image_type)))
     return images
+
+def scale(image, scale):
+    return cv2.resize(image, None, fx=scale, fy=scale)
