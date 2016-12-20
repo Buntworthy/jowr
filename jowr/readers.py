@@ -82,13 +82,13 @@ class Video(Capture):
     def get_frame(self, index):
         """Get a frame from the Video.
 
+        Args:
+            index (int): 0-based index to the frame to get.
+
         Note:
             It is not recommended to call this method directly, frames from the
             webcam should be accessed using the `Frames` object returned by the
             `open_frames` method.
-
-        Args:
-            index (int): 0-based index to the frame to get.
 
         """
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
@@ -120,21 +120,22 @@ class Camera(Capture):
     def get_frame(self, index):
         """Get a frame from the Webcam.
 
-        Note:
-            It is not recommended to call this method directly, frames from the
-            webcam should be accessed using the `Frames` object returned by the
-            `open_frames` method.
-
         Args:
             index (int): 0-based index to the frame to get.
+
+        Raises:
+            NotImplementedError: If the requested index does not match the
+            next_frame_number.
 
         Note:
             The requested index must match the `next_frame_number` of the
             `Camera`.
 
-        Raises:
-            NotImplementedError: If the requested index does not match the
-            next_frame_number.
+        Note:
+            It is not recommended to call this method directly, frames from the
+            webcam should be accessed using the `Frames` object returned by the
+            `open_frames` method.
+
         """
         if index == self.next_frame_number:
             return self.next_frame()
