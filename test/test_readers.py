@@ -12,14 +12,14 @@ import random
 # Test file formats
 
 def test_video_frames():
-    n_Frames = 255
+    n_frames = 255
     video_file = 'data/videos/gray_sweep.avi'
 
     video = jowr.Video(video_file)
-    assert len(video) == n_Frames
+    assert len(video) == n_frames
 
     with video.open_frames() as frames:
-        assert sum(1 for _ in frames) == n_Frames
+        assert sum(1 for _ in frames) == n_frames
 
 
 def test_no_video():

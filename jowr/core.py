@@ -45,12 +45,9 @@ def close(window_name=DEFAULT_WINDOW_NAME):
     cv2.destroyWindow(window_name)
 
 
-def im_read_resize(filename, new_width=0, new_height=0):
-    return cv2.resize(cv2.imread(filename), None, fx=new_width, fy=new_height)
-
-
 def add_to_zip(image, filename):
     """ Add an image to zip file with datestamp."""
+    # TODO use a temporary directory
     with zipfile.ZipFile(filename, 'a') as zip_file:
         # Make the filename
         temp_filename = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')\
@@ -68,6 +65,7 @@ def resolution(image):
     if not isinstance(image, np.ndarray):
         raise TypeError("Image is not a Numpy array.")
     im_shape = image.shape
+    # TODO named tuple
     width = im_shape[1]
     height = im_shape[0]
     return width, height
