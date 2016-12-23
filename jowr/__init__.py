@@ -5,3 +5,4 @@ from jowr.core import *
 from jowr.pipeline import *
 from jowr.readers import *
 from jowr.calibration import *
+from .exceptions import CaptureNotOpenError

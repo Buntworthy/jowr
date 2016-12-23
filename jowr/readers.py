@@ -52,7 +52,8 @@ class Capture:
             IndexError: I   f the end of the source has been reached.
 
         """
-        # TODO raise custom exception if not cap
+        if not self.cap:
+            raise jowr.CaptureNotOpenError
         exists, frame = self.cap.read()
         self.next_frame_number += 1
         if exists:
@@ -91,6 +92,8 @@ class Video(Capture):
             `open_frames` method.
 
         """
+        if not self.cap:
+            raise jowr.CaptureNotOpenError
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
         self.next_frame_number = index
         return self.next_frame()
@@ -128,8 +131,9 @@ class Camera(Capture):
             next_frame_number.
 
         Note:
-            The requested index must match the `next_frame_number` of the
-            `Camera`.
+            This method only returns a frame if the requested index matches the
+            `next_frame_number` of the `Camera`, i.e. duplicating the
+            `next_frame` method.
 
         Note:
             It is not recommended to call this method directly, frames from the
